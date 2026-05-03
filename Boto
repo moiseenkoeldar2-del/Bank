@@ -1,0 +1,65 @@
+const TelegramBot = require("node-telegram-bot-api");
+
+const TOKEN = "8739260292:AAEgsZNV00AqzWJRmU6ggXHFmmGTgux65d4";
+const ADMIN_ID = "7981167922";
+
+const bot = new TelegramBot(TOKEN, { polling: true });
+
+let users = {};
+
+/* 💰 создать аккаунт */
+bot.onText(/\/start (.+)/, (msg, match) => {
+
+    let name = match[1];
+
+    if(!users[name]) users[name] = 100;
+
+    bot.sendMessage(msg.chat.id,
+`👤 Аккаунт: ${name}
+💰 Баланс: ${users[name]}$
+
+💸 Для перевода напиши:
+SEND имя сумма`
+    );
+});
+
+/* 💸 перевод */
+bot.on("message", (msg)=>{
+
+    let text = msg.text;
+
+    if(!text) return;
+
+    if(text.startsWith("SEND ")){
+
+        let parts = text.split(" ");
+
+        let from = parts[1];   // отправитель
+        let to = parts[2];     // получатель
+        let amount = Number(parts[3]);
+
+        if(!users[from]) users[from] = 100;
+        if(!users[to]) users[to] = 100;
+
+        if(users[from] < amount){
+            bot.sendMessage(msg.chat.id,"❌ нет денег");
+            return;
+        }
+
+        users[from] -= amount;
+        users[to] += amount;
+
+        bot.sendMessage(msg.chat.id,
+`✔ ПЕРЕВОД
+
+👤 От: ${from}
+👤 Кому: ${to}
+💰 Сумма: ${amount}$
+
+💰 Баланс ${from}: ${users[from]}$
+💰 Баланс ${to}: ${users[to]}$`
+        );
+    }
+});
+
+console.log("BOT RUNNING");
